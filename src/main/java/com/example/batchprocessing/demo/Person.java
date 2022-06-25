@@ -11,9 +11,10 @@ public class Person {
 
     private String firstName;
     private String lastName;
+    private int age;
 
     public String toString() {
-        return "firstName: " + firstName + ", lastName: " + lastName;
+        return "firstName: " + firstName + ", lastName: " + lastName + ", age: " + age ;
     }
 
 }

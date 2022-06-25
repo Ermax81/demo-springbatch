@@ -38,7 +38,7 @@ public class BatchConfiguration {
               .name("personItemReader")
               .resource(new ClassPathResource("sample-data.csv"))
               .lineTokenizer(new DelimitedLineTokenizer() {{
-                  setNames("firstName", "lastName");
+                  setNames("firstName", "lastName", "age");
                   setDelimiter(";");
               }
               })
@@ -64,7 +64,7 @@ public class BatchConfiguration {
     public JdbcBatchItemWriter<Person> writer(DataSource dataSource) {
         return  new JdbcBatchItemWriterBuilder<Person>()
                 .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
-                .sql("INSERT INTO people (first_name, last_name) VALUES (:firstName, :lastName)")
+                .sql("INSERT INTO people (first_name, last_name, age) VALUES (:firstName, :lastName, :age)")
                 .dataSource(dataSource)
                 .build();
     }
