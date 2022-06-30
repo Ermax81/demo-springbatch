@@ -1,0 +1,16 @@
+version: '3'
+services:
+
+  mysql:
+    image: mariadb:10.5-focal
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: batchdb
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+    restart: always

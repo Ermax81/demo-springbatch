@@ -1,0 +1,45 @@
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v2.7.1)
+
+2022-06-30 09:18:18.244  INFO 96988 --- [           main] c.e.b.demo.BatchProcessingApplication    : Starting BatchProcessingApplication using Java 11.0.10 on MacBook-Pro-de-admin.local with PID 96988 (/Users/admin/IdeaProjects/github.com/Ermax81/demo-springbatch/target/classes started by admin in /Users/admin/IdeaProjects/github.com/Ermax81/demo-springbatch)
+2022-06-30 09:18:18.247  INFO 96988 --- [           main] c.e.b.demo.BatchProcessingApplication    : No active profile set, falling back to 1 default profile: "default"
+2022-06-30 09:18:18.825  INFO 96988 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2022-06-30 09:18:18.843  INFO 96988 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 10 ms. Found 0 JPA repository interfaces.
+2022-06-30 09:18:19.069  INFO 96988 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2022-06-30 09:18:19.096  INFO 96988 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 5.6.9.Final
+2022-06-30 09:18:19.178  INFO 96988 --- [           main] o.hibernate.annotations.common.Version   : HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2022-06-30 09:18:19.240  INFO 96988 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2022-06-30 09:18:19.301  INFO 96988 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2022-06-30 09:18:19.313  INFO 96988 --- [           main] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MariaDB103Dialect
+2022-06-30 09:18:19.444  INFO 96988 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2022-06-30 09:18:19.451  INFO 96988 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2022-06-30 09:18:20.145  WARN 96988 --- [           main] o.s.b.a.batch.JpaBatchConfigurer         : JPA does not support custom isolation levels, so locks may not be taken when launching Jobs. To silence this warning, set 'spring.batch.jdbc.isolation-level-for-create' to 'default'.
+2022-06-30 09:18:20.147  INFO 96988 --- [           main] o.s.b.c.r.s.JobRepositoryFactoryBean     : No database type set, using meta data indicating: MYSQL
+2022-06-30 09:18:20.272  INFO 96988 --- [           main] o.s.b.c.l.support.SimpleJobLauncher      : No TaskExecutor has been set, defaulting to synchronous executor.
+2022-06-30 09:18:20.353  INFO 96988 --- [           main] c.e.b.demo.BatchProcessingApplication    : Started BatchProcessingApplication in 2.569 seconds (JVM running for 3.322)
+2022-06-30 09:18:20.355  INFO 96988 --- [           main] o.s.b.a.b.JobLauncherApplicationRunner   : Running default command line with: []
+2022-06-30 09:18:20.545  INFO 96988 --- [           main] o.s.b.c.l.support.SimpleJobLauncher      : Job: [FlowJob: [name=importUserJob]] launched with the following parameters: [{run.id=1}]
+2022-06-30 09:18:20.633  INFO 96988 --- [           main] o.s.batch.core.job.SimpleStepHandler     : Executing step: [step1]
+2022-06-30 09:18:20.684  INFO 96988 --- [           main] c.e.b.demo.PersonItemProcessor           : Converting (firstName: Jill, lastName: Doe, age: 40) into (firstName: JILL, lastName: DOE, age: 40)
+2022-06-30 09:18:20.685  INFO 96988 --- [           main] c.e.b.demo.PersonItemProcessor           : Converting (firstName: Joe, lastName: Doe, age: 41) into (firstName: JOE, lastName: DOE, age: 41)
+2022-06-30 09:18:20.685  INFO 96988 --- [           main] c.e.b.demo.PersonItemProcessor           : Converting (firstName: Justin, lastName: Doe, age: 8) into (firstName: JUSTIN, lastName: DOE, age: 8)
+2022-06-30 09:18:20.685  INFO 96988 --- [           main] c.e.b.demo.PersonItemProcessor           : Converting (firstName: Jane, lastName: Doe, age: 6) into (firstName: JANE, lastName: DOE, age: 6)
+2022-06-30 09:18:20.685  INFO 96988 --- [           main] c.e.b.demo.PersonItemProcessor           : Converting (firstName: John, lastName: Doe, age: 3) into (firstName: JOHN, lastName: DOE, age: 3)
+2022-06-30 09:18:20.716  INFO 96988 --- [           main] o.s.batch.core.step.AbstractStep         : Step: [step1] executed in 82ms
+2022-06-30 09:18:20.734  INFO 96988 --- [           main] .e.b.d.JobCompletionNotificationListener : !!! JOB FINISHED! Time to verify the results
+2022-06-30 09:18:20.737  INFO 96988 --- [           main] .e.b.d.JobCompletionNotificationListener : Found <firstName: JILL, lastName: DOE, age: 40> in the database.
+2022-06-30 09:18:20.737  INFO 96988 --- [           main] .e.b.d.JobCompletionNotificationListener : Found <firstName: JOE, lastName: DOE, age: 41> in the database.
+2022-06-30 09:18:20.737  INFO 96988 --- [           main] .e.b.d.JobCompletionNotificationListener : Found <firstName: JUSTIN, lastName: DOE, age: 8> in the database.
+2022-06-30 09:18:20.737  INFO 96988 --- [           main] .e.b.d.JobCompletionNotificationListener : Found <firstName: JANE, lastName: DOE, age: 6> in the database.
+2022-06-30 09:18:20.737  INFO 96988 --- [           main] .e.b.d.JobCompletionNotificationListener : Found <firstName: JOHN, lastName: DOE, age: 3> in the database.
+2022-06-30 09:18:20.750  INFO 96988 --- [           main] o.s.b.c.l.support.SimpleJobLauncher      : Job: [FlowJob: [name=importUserJob]] completed with the following parameters: [{run.id=1}] and the following status: [COMPLETED] in 170ms
+2022-06-30 09:18:20.755  INFO 96988 --- [           main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2022-06-30 09:18:20.757  INFO 96988 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2022-06-30 09:18:20.777  INFO 96988 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+
+Process finished with exit code 0
