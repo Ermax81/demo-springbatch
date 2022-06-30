@@ -17,13 +17,3 @@ CREATE TABLE `people`  (
     age INTEGER,
     PRIMARY KEY (`person_id`)
 );
-
-drop table IF EXISTS `tmppeople`;
-CREATE TABLE `tmppeople`  (
-    person_id INT(11) NOT NULL AUTO_INCREMENT,
-    first_name VARCHAR(20),
-    last_name VARCHAR(20),
-    age INTEGER,
-    PRIMARY KEY (`person_id`)
-);
-
