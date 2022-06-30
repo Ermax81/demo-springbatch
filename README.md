@@ -5,6 +5,7 @@ Sources:
 - https://github.com/springframeworkguru/spring-boot-mariadb-example
 - https://www.rockyourcode.com/setup-mariadb-via-docker-with-spring-boot/
 - https://www.baeldung.com/spring-boot-data-sql-and-schema-sql
+- https://www.baeldung.com/javax-validation
 
 JAVA11 SPRING_BATCH
 

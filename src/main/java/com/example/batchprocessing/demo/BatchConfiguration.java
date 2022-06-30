@@ -14,9 +14,11 @@ import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.validator.SpringValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import javax.sql.DataSource;
 
@@ -53,8 +55,17 @@ public class BatchConfiguration {
     // meant to convert the data to upper case.
     @Bean
     public PersonItemProcessor processor() {
-        return new PersonItemProcessor();
+        return new PersonItemProcessor(springValidatorItem());
     }
+
+//    @Bean
+//    public BeanValidatingItemProcessor<Person> itemValidator() throws Exception {
+//        BeanValidatingItemProcessor<Person> validator = new BeanValidatingItemProcessor<>();
+//        validator.setFilter(true);
+//        validator.afterPropertiesSet();
+//
+//        return validator;
+//    }
 
     // Creates an ItemWriter.
     // This one is aimed at a JDBC destination
@@ -80,13 +91,27 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public Step step1(JdbcBatchItemWriter<Person> writer) {
+    public Step step1(JdbcBatchItemWriter<Person> writer) throws Exception {
         return stepBuilderFactory.get("step1")
                 .<Person, Person> chunk(10)
                 .reader(reader())
                 .processor(processor())
+                //.processor(itemValidator())
                 .writer(writer)
                 .build();
+    }
+
+    // VALIDATOR
+    @Bean
+    public org.springframework.validation.Validator localValidatorFactoryBean() {
+        return new LocalValidatorFactoryBean();
+    }
+
+    @Bean
+    public <T> SpringValidator<T> springValidatorItem() {
+        SpringValidator<T> springValidator = new SpringValidator<>();
+        springValidator.setValidator(localValidatorFactoryBean());
+        return springValidator;
     }
 
 }
