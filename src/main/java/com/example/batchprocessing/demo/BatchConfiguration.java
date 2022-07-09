@@ -6,6 +6,9 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
+import org.springframework.batch.core.job.flow.support.SimpleFlow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
@@ -19,6 +22,8 @@ import org.springframework.batch.item.validator.SpringValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import javax.sql.DataSource;
@@ -91,13 +96,16 @@ public class BatchConfiguration {
                 .incrementer(new RunIdIncrementer()) //need an incrementer, because jobs use a database to maintain execution state
                 .listener(listener)
 
-                .start(step1)
+                //Version without flows
+//                .start(step1)
+//                .next(step2()).on("NOOP").end()
+//                .from(step2()).on("COMPLETED").to(stepThink()).next(stepDone())
+//                .from(step2()).on("FAILED").to(stepFail()).end()
 
-                .next(step2()).on("NOOP").end()
-
-                .from(step2()).on("COMPLETED").to(stepThink()).next(stepDone())
-
-                .from(step2()).on("FAILED").to(stepFail()).end()
+                //Version with flows
+                .start(splitFlow())
+                .next(step1)
+                .build()
 
                 .build();
     }
@@ -171,6 +179,20 @@ public class BatchConfiguration {
                 .build();
     }
 
+    @Bean
+    public Tasklet doNotKnowTasklet() {
+        String message = "I do not know what to do";
+        return new MessageTasklet(message, true);
+    }
+
+    @Bean
+    public Step stepDoNotKnow() {
+        return stepBuilderFactory.get("stepDoNotKnow")
+                .allowStartIfComplete(true)
+                .tasklet(doNotKnowTasklet())
+                .build();
+    }
+
     // VALIDATOR
     @Bean
     public org.springframework.validation.Validator localValidatorFactoryBean() {
@@ -182,6 +204,43 @@ public class BatchConfiguration {
         SpringValidator<T> springValidator = new SpringValidator<>();
         springValidator.setValidator(localValidatorFactoryBean());
         return springValidator;
+    }
+
+    // TASKEXECUTOR & FLOW
+    // Source: https://stackoverflow.com/questions/32826587/run-springbatch-step-parralel-and-sequential
+    // Source: https://programmer.help/blogs/spring-batch-batch-job-flow-split.html
+    // Source: https://medium.com/javarevisited/multithreading-in-springbatch-d1166e5ad25c
+    // video: https://www.youtube.com/watch?v=IpttM5ggDO0
+
+    // SOURCE: https://docs.spring.io/spring-batch/docs/current/reference/html/scalability.html
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        return new SimpleAsyncTaskExecutor("Thread-");
+    }
+
+    @Bean
+    public Flow flow1() {
+        return new FlowBuilder<SimpleFlow>("flow1")
+                .start(stepDoNotKnow())
+                .build();
+    }
+
+    public Flow flow2() {
+        return new FlowBuilder<Flow>("flow2")
+                .start(step2()).on("NOOP").end()
+                .from(step2()).on("COMPLETED").to(stepThink())
+                .from(step2()).on("FAILED").to(stepFail())
+                .next(stepDone())
+                .build();
+    }
+
+    @Bean
+    public Flow splitFlow() {
+        return new FlowBuilder<SimpleFlow>("simpleFlow")
+                .split(taskExecutor())
+                .add(flow1(), flow2())
+                .build();
     }
 
 }
