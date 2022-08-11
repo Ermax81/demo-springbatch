@@ -11,6 +11,7 @@ import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.job.flow.support.SimpleFlow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
@@ -219,10 +220,43 @@ public class BatchConfiguration {
         return new SimpleAsyncTaskExecutor("Thread-");
     }
 
+    // Required to share Objets between tasklet, step, ...
+    // Map<String,Object> : String = id to put/get object
+    @Bean
+    public ExecutionContext executionContext() {
+        return new ExecutionContext();
+    }
+
+    @Bean
+    public Tasklet createSharedInfo() {
+        return new CreateInfoTasklet();
+    }
+
+    @Bean
+    public Tasklet getSharedInfo() {
+        return new GetInfoTasklet();
+    }
+
+    @Bean
+    public Step stepCreateSharedInfo() {
+        return stepBuilderFactory.get("stepSharedInfo")
+                .tasklet(createSharedInfo())
+                .build();
+    }
+
+    @Bean
+    public Step stepGetSharedInfo() {
+        return stepBuilderFactory.get("stepSharedInfo")
+                .tasklet(getSharedInfo())
+                .build();
+    }
+
     @Bean
     public Flow flow1() {
         return new FlowBuilder<SimpleFlow>("flow1")
                 .start(stepDoNotKnow())
+                .next(stepCreateSharedInfo())
+                .next(stepGetSharedInfo())
                 .build();
     }
 
