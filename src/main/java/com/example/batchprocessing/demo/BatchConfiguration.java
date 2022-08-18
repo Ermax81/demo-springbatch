@@ -7,10 +7,21 @@ import org.springframework.batch.core.configuration.annotation.EnableBatchProces
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.core.step.tasklet.Tasklet;
-import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
+import org.springframework.batch.item.database.JdbcBatchItemWriter;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
+import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
+import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.validator.BeanValidatingItemProcessor;
+import org.springframework.batch.item.validator.SpringValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+
+import javax.sql.DataSource;
 
 @Configuration
 @EnableBatchProcessing //adds many critical beans that support jobs and save you a lot of leg work
@@ -22,135 +33,93 @@ public class BatchConfiguration {
 
     public StepBuilderFactory stepBuilderFactory;
 
+    // Creates an ItemReader.
+    // It looks for a file called sample-data.csv and parses each line item with enough information to turn it into a Person.
     @Bean
-    public Job jobMessageDoNotKnow(JobCompletionNotificationListener listener) {
-        // JOB_NAME in table BATCH_JOB_INSTANCE i
-        // JOB_EXECUTION_ID, START_TIME, END_TIME, STATUS... in table BATCH_JOB_EXECUTION e
-        // i.JOB_INSTANCE_ID = e.JOB_INSTANCE_ID
-
-        return jobBuilderFactory.get("jobMessageDoNotKnow")
-                .incrementer(new RunIdIncrementer()) //need an incrementer, because jobs use a database to maintain execution state
-                .listener(listener)
-                .start(stepDoNotKnow())
-                .build();
-
-    }
-
-    @Bean
-    public Job jobMessageFail(JobCompletionNotificationListener listener) {
-        // JOB_NAME in table BATCH_JOB_INSTANCE i
-        // JOB_EXECUTION_ID, START_TIME, END_TIME, STATUS... in table BATCH_JOB_EXECUTION e
-        // i.JOB_INSTANCE_ID = e.JOB_INSTANCE_ID
-
-        return jobBuilderFactory.get("jobMessageFail")
-                .incrementer(new RunIdIncrementer()) //need an incrementer, because jobs use a database to maintain execution state
-                .listener(listener)
-                .start(stepDoNotKnow())
-                .build();
-
-    }
-
-    @Bean
-    public Tasklet failTasklet() {
-        String message = "Failing to build something...";
-        return new MessageTasklet(message, true);
-    }
-
-    @Bean
-    public Step stepFail() {
-        return stepBuilderFactory.get("stepFail")
-                .allowStartIfComplete(true)
-                .tasklet(failTasklet())
+    public FlatFileItemReader<Person> reader() {
+        return new FlatFileItemReaderBuilder<Person>()
+                .name("personItemReader")
+                .resource(new FileSystemResource("local/sample-data.csv")) // csv file in another folder than resources folder
+                //.resource(new ClassPathResource("sample-data.csv"))
+                .lineTokenizer(new DelimitedLineTokenizer() {{
+                    setNames("firstName", "lastName", "age");
+                    setDelimiter(";");
+                }
+                })
+                //.delimited().names(new String[]{"firstName", "lastName"}) //comma delimiter: ','
+                .fieldSetMapper(new BeanWrapperFieldSetMapper<>() {{
+                    setTargetType(Person.class);
+                }})
                 .build();
     }
 
+    // Creates an instance of the PersonItemProcessor that you defined earlier,
+    // meant to convert the data to upper case.
     @Bean
-    public Tasklet doneTasklet() {
-        String message = "I'm done";
-        return new MessageTasklet(message, true);
+    public PersonItemProcessor processor() {
+        return new PersonItemProcessor(springValidatorItem());
     }
 
     @Bean
-    public Step stepDone() {
-        return stepBuilderFactory.get("stepDone")
-                .allowStartIfComplete(true)
-                .tasklet(doneTasklet())
+    public BeanValidatingItemProcessor<Person> itemValidator() throws Exception {
+        BeanValidatingItemProcessor<Person> validator = new BeanValidatingItemProcessor<>();
+        validator.setFilter(true);
+        validator.afterPropertiesSet();
+
+        return validator;
+    }
+
+    // Creates an ItemWriter.
+    // This one is aimed at a JDBC destination
+    // and automatically gets a copy of the dataSource created by @EnableBatchProcessing.
+    // It includes the SQL statement needed to insert a single Person, driven by Java bean properties.
+    @Bean
+    public JdbcBatchItemWriter<Person> writer(DataSource dataSource) {
+        return  new JdbcBatchItemWriterBuilder<Person>()
+                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
+                .sql("INSERT INTO people (first_name, last_name, age) VALUES (:firstName, :lastName, :age)")
+                .dataSource(dataSource)
                 .build();
     }
 
+    // VALIDATOR
     @Bean
-    public Tasklet thinkTasklet() {
-        String message = "<Thinking of ...>";
-        return new MessageTasklet(message, true);
+    public org.springframework.validation.Validator localValidatorFactoryBean() {
+        return new LocalValidatorFactoryBean();
     }
 
     @Bean
-    public Step stepThink() {
-        return stepBuilderFactory.get("stepThink")
-                .allowStartIfComplete(true)
-                .tasklet(thinkTasklet())
-                .build();
+    public <T> SpringValidator<T> springValidatorItem() {
+        SpringValidator<T> springValidator = new SpringValidator<>();
+        springValidator.setValidator(localValidatorFactoryBean());
+        return springValidator;
     }
 
     @Bean
-    public Tasklet doNotKnowTasklet() {
-        String message = "I do not know what to do";
-        return new MessageTasklet(message, true);
-    }
+    public Step stepImportPerson(JdbcBatchItemWriter<Person> writer) throws Exception {
 
-    @Bean
-    public Step stepDoNotKnow() {
-        return stepBuilderFactory.get("stepDoNotKnow")
-                .allowStartIfComplete(true)
-                .tasklet(doNotKnowTasklet())
-                .build();
-    }
-
-
-    //////////////////////
-
-    // Required to share Objets between tasklet, step, ...
-    // Map<String,Object> : String = id to put/get object
-    @Bean
-    public ExecutionContext executionContext() {
-        return new ExecutionContext();
-    }
-
-    @Bean
-    public Tasklet createSharedInfo() {
-        return new CreateInfoTasklet();
-    }
-
-    @Bean
-    public Tasklet getSharedInfo() {
-        return new GetInfoTasklet();
-    }
-
-    @Bean
-    public Step stepCreateSharedInfo() {
-        return stepBuilderFactory.get("stepSharedInfo")
-                .tasklet(createSharedInfo())
+        // STEP_NAME, JOB_EXECUTION_ID, START_TIME, END_TIME, STATUS in table BATCH_STEP_EXECUTION
+        return stepBuilderFactory.get("stepImportPerson")
+                .<Person, Person> chunk(10)
+                .reader(reader())
+                .processor(processor())
+                //.processor(itemValidator())
+                .writer(writer)
                 .build();
     }
 
     @Bean
-    public Step stepGetSharedInfo() {
-        return stepBuilderFactory.get("stepSharedInfo")
-                .tasklet(getSharedInfo())
-                .build();
-    }
-
-    @Bean
-    public Job jobSharedInfo(JobCompletionNotificationListener listener) {
+    public Job importUserJob(JobCompletionNotificationListener listener
+                    , JdbcBatchItemWriter<Person> writer
+    ) throws Exception {
 
         // JOB_NAME in table BATCH_JOB_INSTANCE i
         // JOB_EXECUTION_ID, START_TIME, END_TIME, STATUS... in table BATCH_JOB_EXECUTION e
         // i.JOB_INSTANCE_ID = e.JOB_INSTANCE_ID
-        return jobBuilderFactory.get("shareInfo")
+        return jobBuilderFactory.get("importUserJob")
                 .incrementer(new RunIdIncrementer()) //need an incrementer, because jobs use a database to maintain execution state
                 .listener(listener)
-                .start(stepCreateSharedInfo())
-                .next(stepGetSharedInfo())
+                .start(stepImportPerson(writer))
                 .build();
     }
 
