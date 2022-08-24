@@ -32,16 +32,16 @@ public class MessageTasklet implements Tasklet {
         ExitStatus status = ExitStatus.COMPLETED;
 
         if (isCompleted || randomBoolean) {
-            logger.info(message);
+            logger.info(message+": Status="+status.toString());
         } else {
             if (randomInt % 2 == 0) {
                 // even number
-                logger.warn(message);
                 status = ExitStatus.NOOP;
+                logger.warn(message+": Status="+status.toString());
             } else {
                 // odd number
-                logger.error(message);
                 status = ExitStatus.FAILED;
+                logger.error(message+": Status="+status.toString());
             }
         }
         stepContribution.setExitStatus(status);
