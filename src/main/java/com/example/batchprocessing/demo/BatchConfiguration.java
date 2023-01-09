@@ -124,7 +124,7 @@ public class BatchConfiguration {
     @Bean
     public Step step2() {
         return stepBuilderFactory.get("step2")
-                .allowStartIfComplete(true)
+                .allowStartIfComplete(true) //Usefull to re-execute a Step that is COMPLETED
                 .tasklet(executeTasklet())
                 .build();
     }

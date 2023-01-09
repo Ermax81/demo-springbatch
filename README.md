@@ -10,3 +10,6 @@ Sources:
 JAVA11 SPRING_BATCH
 
 DELIMITER: ";"
+
+How to configure a step: https://docs.spring.io/spring-batch/docs/current/reference/html/step.html#configureStep
+
