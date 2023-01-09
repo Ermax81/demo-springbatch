@@ -103,10 +103,11 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public Step step1(JdbcBatchItemWriter<Person> writer) throws Exception {
+    public Step step1(JdbcBatchItemWriter<Person> writer, StepListener stepListener) throws Exception {
 
         // STEP_NAME, JOB_EXECUTION_ID, START_TIME, END_TIME, STATUS in table BATCH_STEP_EXECUTION
         return stepBuilderFactory.get("step1")
+                .listener(stepListener)
                 .<Person, Person> chunk(10)
                 .reader(reader())
                 .processor(processor())
