@@ -13,3 +13,5 @@ DELIMITER: ";"
 
 How to configure a step: https://docs.spring.io/spring-batch/docs/current/reference/html/step.html#configureStep
 
+More info about how to implement listeners: https://howtodoinjava.com/spring-batch/spring-batch-event-listeners/
+
