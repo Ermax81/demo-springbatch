@@ -90,6 +90,7 @@ public class BatchConfiguration {
         return jobBuilderFactory.get("importUserJob")
                 .incrementer(new RunIdIncrementer()) //need an incrementer, because jobs use a database to maintain execution state
                 .listener(listener)
+                .listener(new JobResultListener())
 
                 .start(step1)
 
@@ -107,12 +108,17 @@ public class BatchConfiguration {
 
         // STEP_NAME, JOB_EXECUTION_ID, START_TIME, END_TIME, STATUS in table BATCH_STEP_EXECUTION
         return stepBuilderFactory.get("step1")
-                .listener(stepListener)
-                .<Person, Person> chunk(10)
+                //.listener(stepListener) //OK
+                .listener(new StepResultListener())
+                .<Person, Person> chunk(3)
                 .reader(reader())
+                .listener(new StepItemReadListener())
                 .processor(processor())
                 //.processor(itemValidator())
+                .listener(new StepItemProcessListener())
                 .writer(writer)
+                .listener(new StepItemWriteListener())
+                .listener(new ChunkResultListener())
                 .build();
     }
 
@@ -127,6 +133,7 @@ public class BatchConfiguration {
         return stepBuilderFactory.get("step2")
                 .allowStartIfComplete(true) //Usefull to re-execute a Step that is COMPLETED
                 .tasklet(executeTasklet())
+                .listener(new StepResultListener())
                 .build();
     }
 
@@ -141,6 +148,7 @@ public class BatchConfiguration {
         return stepBuilderFactory.get("stepFail")
                 .allowStartIfComplete(true)
                 .tasklet(failTasklet())
+                .listener(new StepResultListener())
                 .build();
     }
 
@@ -155,6 +163,7 @@ public class BatchConfiguration {
         return stepBuilderFactory.get("stepDone")
                 .allowStartIfComplete(true)
                 .tasklet(doneTasklet())
+                .listener(new StepResultListener())
                 .build();
     }
 
@@ -169,6 +178,7 @@ public class BatchConfiguration {
         return stepBuilderFactory.get("stepThink")
                 .allowStartIfComplete(true)
                 .tasklet(thinkTasklet())
+                .listener(new StepResultListener())
                 .build();
     }
 

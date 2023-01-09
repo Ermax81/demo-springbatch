@@ -30,7 +30,7 @@ public class PersonItemProcessor implements ItemProcessor<Person,Person> {
 
             transformedPerson = new Person(firstName, lastName, age);
 
-            log.info("Converting (" + person + ") into (" + transformedPerson + ")");
+            log.info("PROCESSOR Converting (" + person + ") into (" + transformedPerson + ")");
 
 
         } catch(ValidationException v) {
