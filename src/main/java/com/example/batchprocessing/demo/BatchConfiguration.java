@@ -12,6 +12,7 @@ import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourc
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
@@ -117,6 +118,12 @@ public class BatchConfiguration {
                 //.processor(itemValidator())
                 .listener(new StepItemProcessListener())
                 .writer(writer)
+
+                //To skip 1 time a FlatFileParseException (for line 9)
+                .faultTolerant()
+                .skipLimit(1)
+                .skip(FlatFileParseException.class)
+
                 .listener(new StepItemWriteListener())
                 .listener(new ChunkResultListener())
                 .build();
